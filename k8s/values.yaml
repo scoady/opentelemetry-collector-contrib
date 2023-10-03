@@ -1,0 +1,37 @@
+opentelemetry-collector:
+   image:
+     repository: public.ecr.aws/f3w5w9e7/snow-otelcol-contrib
+     tag: v0.86.2
+   command:
+     name: otelcontribcol
+     extraArgs: []
+   config:
+     connectors:
+      exceptions:
+     exporters:
+       logging:
+       otlp/traces:
+         endpoint: kube-otel-stack-traces-collector:4317
+         tls:
+           insecure: true
+       otlp/metrics:
+         endpoint: kube-otel-stack-metrics-collector:4317
+         tls:
+           insecure: true
+       otlp/logs:
+         endpoint: ingest.lightstep.com:443
+         headers:
+          'lightstep-access-token': 'insert your access token here'
+     service:
+       pipelines:
+         metrics:
+           receivers: [otlp,exceptions]
+           processors: [batch]
+           exporters: [otlp/metrics]
+         traces:
+           receivers: [otlp]
+           processors: [batch]
+           exporters: [otlp/traces, exceptions]
+         logs:
+           receivers: [exceptions]
+           exporters: [otlp/logs]    
